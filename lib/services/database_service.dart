@@ -23,7 +23,7 @@ class DataBaseService {
   Future<Database> getDatabase() async {
     final databaseDirPath = await getDatabasesPath();
     final databasePath = join(databaseDirPath, "lista.db");
-    final database = await openDatabase(databasePath, version: 7, onCreate: (
+    final database = await openDatabase(databasePath, version: 8, onCreate: (
       db,
       version,
     ) {
@@ -32,7 +32,7 @@ class DataBaseService {
       (
         $_id INTEGER PRIMARY KEY,
         $_name text NOT NULL,
-        $_price INTEGER,
+        $_price text,
         $_isBought INTEGER NOT NULL
       )
      ''');
@@ -47,13 +47,52 @@ class DataBaseService {
 
     await db.insert(
       _productsTableName,
-      {_name: name, _isBought: 0, _price: 0},
+      {_name: name, _isBought: 0, _price: "0"},
     );
   }
 
-  Future<List<Product>?> getProducts() async {
+  Future<List<Product>> getProducts() async {
     final db = await database;
     final data = await db.query(_productsTableName);
-    print(data);
+    List<Product> products = data
+        .map((e) => Product(
+              id: e["id"] as int,
+              isBought: e["isBought"] as int,
+              name: e["name"] as String,
+              price: e["price"].toString(),
+            ))
+        .toList();
+    return products;
+  }
+
+  void updateProductIsBought(int id, int isBought) async {
+    final db = await database;
+    await db.update(
+        _productsTableName,
+        {
+          _isBought: isBought,
+        },
+        where: 'id = ?',
+        whereArgs: [
+          id,
+        ]);
+  }
+
+  void deleteProduct(int id) async {
+    final db = await database;
+    await db.delete(_productsTableName, where: 'id = ?', whereArgs: [
+      id,
+    ]);
+  }
+
+  void setPrice(String price, int id) async {
+    final db = await database;
+    await db.update(
+        _productsTableName,
+        {
+          _price: price,
+        },
+        where: 'id = ?',
+        whereArgs: [id]);
   }
 }
