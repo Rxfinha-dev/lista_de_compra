@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lista_de_compra/services/database_service.dart';
-import 'package:sqflite/sqflite.dart';
-
 import '../models/product.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,9 +12,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final DataBaseService _databaseService = DataBaseService.instance;
 
-  String? _product = null;
+  String? _product;
+
   @override
-  Widget build(Object context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: _addProductButton(),
       body: _productList(),
@@ -29,39 +28,40 @@ class _HomePageState extends State<HomePage> {
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
-            title: const Text('Adcione o Produto'),
-            content: Column(mainAxisSize: MainAxisSize.min, children: [
-              TextField(
-                onChanged: (value) {
-                  setState(() {
-                    _product = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  border: UnderlineInputBorder(),
-                  hintText: 'Nome do Produto',
-                ),
-              ),
-              MaterialButton(
-                color: Theme.of(context).colorScheme.primary,
-                onPressed: () {
-                  if (_product == null || _product == '') return;
-                  _databaseService.addProduct(_product!);
-                  setState(() {
-                    _product = null;
-                  });
-                  Navigator.pop(
-                    context,
-                  );
-                },
-                child: const Text(
-                  'Adicionar',
-                  style: TextStyle(
-                    color: Colors.white,
+            title: const Text('Adicione o Produto'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      _product = value;
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    border: UnderlineInputBorder(),
+                    hintText: 'Nome do Produto',
                   ),
                 ),
-              )
-            ]),
+                MaterialButton(
+                  color: Theme.of(context).colorScheme.primary,
+                  onPressed: () {
+                    if (_product == null || _product == '') return;
+                    _databaseService.addProduct(_product!);
+                    setState(() {
+                      _product = null;
+                    });
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Adicionar',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -70,58 +70,76 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _productList() {
-    return FutureBuilder(
+    return FutureBuilder<List<Product>>(
       future: _databaseService.getProducts(),
       builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final products = snapshot.data!;
         return ListView.builder(
-            itemCount: snapshot.data?.length ?? 0,
-            itemBuilder: (context, index) {
-              Product product = snapshot.data![index];
-              return ListTile(
-                onLongPress: () {
-                  _databaseService.deleteProduct(
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            Product product = products[index];
+            return ListTile(
+              onLongPress: () {
+                _databaseService.deleteProduct(product.id);
+                setState(() {});
+              },
+              title: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(product.name),
+                  ),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    flex: 3,
+                    child: _priceTextField(product),
+                  ),
+                ],
+              ),
+              trailing: Checkbox(
+                value: product.isBought == 1,
+                onChanged: (value) {
+                  _databaseService.updateProductIsBought(
                     product.id,
+                    value == true ? 1 : 0,
                   );
                   setState(() {});
                 },
-                title: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text(product.name),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      flex: 3,
-                      child: TextField(
-                        onChanged: (price) {
-                          _databaseService.setPrice(price, product.id);
-                          setState(() {});
-                        },
-                        controller: TextEditingController(
-                            text: product.price), // Valor inicial
-                        decoration: InputDecoration(
-                          border: UnderlineInputBorder(),
-                          contentPadding:
-                              EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                trailing: Checkbox(
-                  value: product.isBought == 1,
-                  onChanged: (value) {
-                    _databaseService.updateProductIsBought(
-                      product.id,
-                      value == true ? 1 : 0,
-                    );
-                    setState(() {});
-                  },
-                ),
-              );
-            });
+              ),
+            );
+          },
+        );
       },
+    );
+  }
+
+  Widget _priceTextField(Product product) {
+    // FocusNode and Controller for this TextField
+    final FocusNode focusNode = FocusNode();
+    final TextEditingController controller =
+        TextEditingController(text: product.price);
+
+    // Add listener to handle onBlur (losing focus)
+    focusNode.addListener(() {
+      if (!focusNode.hasFocus) {
+        // Update price in the database
+        _databaseService.setPrice(controller.text, product.id);
+        setState(() {});
+      }
+    });
+
+    return TextField(
+      focusNode: focusNode, // Attach FocusNode
+      controller: controller, // Attach Controller
+      keyboardType: TextInputType.number, // Make it suitable for numeric input
+      decoration: const InputDecoration(
+        border: UnderlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      ),
     );
   }
 }

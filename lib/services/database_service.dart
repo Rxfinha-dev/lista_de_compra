@@ -47,7 +47,11 @@ class DataBaseService {
 
     await db.insert(
       _productsTableName,
-      {_name: name, _isBought: 0, _price: "0"},
+      {
+        _name: name,
+        _isBought: 0,
+        _price: "",
+      },
     );
   }
 
