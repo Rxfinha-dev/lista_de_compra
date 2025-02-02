@@ -99,4 +99,12 @@ class DataBaseService {
         where: 'id = ?',
         whereArgs: [id]);
   }
+
+  void cleanPurchases(int isBought, String price) async {
+    final db = await database;
+    await db.update(
+      _productsTableName,
+      {_price: "", _isBought: 0},
+    );
+  }
 }
