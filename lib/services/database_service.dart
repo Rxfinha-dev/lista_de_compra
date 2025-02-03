@@ -112,6 +112,7 @@ void cleanPurchases() async {
         _price: "",   // Definindo preço como uma string vazia
         _isBought: 0, // Definindo isBought como 0 (não comprado)
       },
+      where: 'price <> "" or isBought = 1',
        // Atualiza todos os registros
     );
     print("Produtos limpos com sucesso!");

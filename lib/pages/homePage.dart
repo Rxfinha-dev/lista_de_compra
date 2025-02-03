@@ -13,6 +13,9 @@ class _HomePageState extends State<HomePage> {
   final DataBaseService _databaseService = DataBaseService.instance;
 
   String? _product;
+  String? _price;
+  int ?_isBought;
+
 
   @override
   Widget build(BuildContext context) {
