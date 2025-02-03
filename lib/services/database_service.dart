@@ -100,11 +100,25 @@ class DataBaseService {
         whereArgs: [id]);
   }
 
-  void cleanPurchases(int isBought, String price) async {
-    final db = await database;
+void cleanPurchases() async {
+  final db = await database;
+
+  try {
+    print("Limpando todos os produtos...");
+    // Certifique-se de que os nomes das colunas estão corretos
     await db.update(
-      _productsTableName,
-      {_price: "", _isBought: 0},
+      _productsTableName, // Nome da tabela
+      {
+        _price: "",   // Definindo preço como uma string vazia
+        _isBought: 0, // Definindo isBought como 0 (não comprado)
+      },
+       // Atualiza todos os registros
     );
+    print("Produtos limpos com sucesso!");
+  } catch (e) {
+    print("Erro ao limpar os produtos: $e");
   }
+}
+
+
 }
