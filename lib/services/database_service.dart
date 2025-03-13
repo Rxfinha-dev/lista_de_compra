@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:lista_de_compra/models/product.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -104,19 +106,18 @@ void cleanPurchases() async {
   final db = await database;
 
   try {
-    print("Limpando todos os produtos...");
-    // Certifique-se de que os nomes das colunas estão corretos
+   
     await db.update(
-      _productsTableName, // Nome da tabela
+      _productsTableName, 
       {
-        _price: "",   // Definindo preço como uma string vazia
-        _isBought: 0, // Definindo isBought como 0 (não comprado)
+        _price: "",   
+        _isBought: 0, 
       },
       where: 'price <> "" or isBought = 1',
-       // Atualiza todos os registros
+       
     );
-    print("Produtos limpos com sucesso!");
   } catch (e) {
+
     print("Erro ao limpar os produtos: $e");
   }
 }
